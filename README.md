@@ -1,4 +1,5 @@
 # 病院側クライアント
+メンバー、エレベーターピッチ→[こっち](https://github.com/enpitut2019/Medical-App-SmartContract)  
 
 # 環境
 Monaca Free Plan  
