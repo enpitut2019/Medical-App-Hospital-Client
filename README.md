@@ -1,7 +1,10 @@
-# 病院側のクライアント
+# 病院側クライアント
 
 # 環境
 Monaca Free Plan  
-iPad必須（それ以外動作未確認）  
-GithubのURLからインポートできますが、enpitut2019下のリポジトリだと直接pushできないのでバージョンが古いです  
-来てもらっても可
+iPad以外動作未確認
+
+# リポジトリ
+[スマートコントラクト](https://github.com/enpitut2019/Medical-App-SmartContract)  
+[患者側クライアント](https://github.com/enpitut2019/Medical-App-Patient-Client)  
+病院側クライアント ここ
