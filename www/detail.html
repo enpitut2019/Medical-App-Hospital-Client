@@ -33,6 +33,7 @@ ons.getScriptPage().onInit = function () {
     let tokenData;
     let ethPrice;
     let patientSign;
+    let signCompleted;
     this.onShow = function () {
         // 違うコントラクトの情報を見る時
         if(examinationContractAddress != examinationContractInstance.options.address){
@@ -63,7 +64,7 @@ function getContractAddress(){
 
     // 全てのイベントをキャッチする
     examinationContractInstance.events.allEvents({}, function(error, event){
-      console.log(event);
+      //console.log(event);
       if(event.event === "Deposit"){
         let deposit = event.returnValues.amountOf;
         $("#depositValue").text(deposit/(10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
@@ -80,6 +81,9 @@ function getContractAddress(){
           $("#unpaidCost").show();
           $("depositValue").hide();
       }
+      if(event.event === "CallWithDraw"){
+
+      }
       if(event.event === "Payment"){
           let isCompleted = event.returnValues.isCompleted;
           let unpaidCost = event.returnValues.unpaidCost;
@@ -87,6 +91,17 @@ function getContractAddress(){
           $("#depositValue").text("0.00" + tokenData[1] + " (" + tokenData[0] + ")");
       }
       hideModal();
+    });
+    // ERC20の送金をキャッチする
+    erc20ContractInstance.events.Transfer({_to: examinationContractAddress}, function(error, event){
+        if(signCompleted){
+          withDraw();
+        }else{
+          // 書き込みの反映を待つためにビジーウェイト
+          let startMsec = new Date();
+          while (new Date() - startMsec < 1000);
+          getContractData();
+        }
     });
     getContractData();
 }
@@ -102,7 +117,7 @@ async function getContractData(){
     let depositValue = contractData[3];
     let medicalCost = contractData[4];
     let unpaidCost = contractData[5];
-    let signCompleted = contractData[6];
+    signCompleted = contractData[6];
     let usedETH = web3.utils.fromWei(contractData[7], 'ether');
     tokenData = contractData[8];
     $("#patientAddress").text(patientAddress);
@@ -182,6 +197,21 @@ async function signMedicalCost(signature){
     showModal("署名を送信中");
     // トランザクションのデータ部にくっつけるバイトコードを生成
     const encodedABI = examinationContractInstance.methods.signMedicalCost(signature).encodeABI();
+    // gasの使用量を計算
+    //let gasAmount = await examinationContractInstance.methods.setMedicalCost(tokenAmountHex).estimateGas() + 10000;
+    let gasAmount = 1000000;
+    // トランザクションにローカルの秘密鍵で署名
+    let signedtx = await web3.eth.accounts.signTransaction({to: examinationContractAddress, data: encodedABI, gas: gasAmount}, myPrivateKey);
+    // 署名済みトランザクションを送信
+    let receipt = await web3.eth.sendSignedTransaction(signedtx.rawTransaction);
+    console.log(receipt);
+}
+
+// 引き出し
+async function withDraw(){
+    showModal("決済中");
+    // トランザクションのデータ部にくっつけるバイトコードを生成
+    const encodedABI = examinationContractInstance.methods.withDraw().encodeABI();
     // gasの使用量を計算
     //let gasAmount = await examinationContractInstance.methods.setMedicalCost(tokenAmountHex).estimateGas() + 10000;
     let gasAmount = 1000000;

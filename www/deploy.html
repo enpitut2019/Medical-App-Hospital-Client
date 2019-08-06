@@ -34,10 +34,7 @@ hospitalContractInstance.events.StartExamination({}, function(error, event){
             hideModal();
             // 遷移の挙動管理のためビジーウェイト
             let startMsec = new Date();
-            while (new Date() - startMsec < 500);
-            tabbar.setActiveTab(1);
-            startMsec = new Date();
-            while (new Date() - startMsec < 500);
+            while (new Date() - startMsec < 1000);
             pushPage2('./detail.html'); 
     }
 });
@@ -70,6 +67,8 @@ function readPatientDataFromQR() {
 // 患者ごとに専用のスマートコントラクトをデプロイ
 async function deploy() {
     showModal("データを送信中"); 
+    // タブ遷移
+    tabbar.setActiveTab(1);
     passportInfo = $("#passportCountry").val() + $("#passportNo").val();
     console.log(passportInfo);
     // パスポート番号の暗号化（病院固有の鍵）
@@ -85,6 +84,7 @@ async function deploy() {
     let signedtx = await web3.eth.accounts.signTransaction({to: HospitalContractAddress, data: encodedABI, gas: gasAmount}, myPrivateKey);
     // 署名済みトランザクションを送信
     let receipt = await web3.eth.sendSignedTransaction(signedtx.rawTransaction);
+
 };
 </script>
 </ons-page>

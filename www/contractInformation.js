@@ -1,6 +1,6 @@
-const HospitalContractAddress = "0xf64065e5167729dbcefd424fa50cd0558f5bbb25"; 
+const HospitalContractAddress = "0x7f27953e637fd70decbeb39e37d18b42afe31c7a"; 
 
-const HospitalContractABI =[
+const HospitalContractABI = [
 	{
 		"constant": false,
 		"inputs": [
@@ -119,15 +119,6 @@ const ExaminationContractABI = [
 	},
 	{
 		"constant": false,
-		"inputs": [],
-		"name": "refund",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
 		"inputs": [
 			{
 				"name": "_signature",
@@ -222,6 +213,20 @@ const ExaminationContractABI = [
 				],
 				"name": "",
 				"type": "tuple"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "test",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
 			}
 		],
 		"payable": false,
