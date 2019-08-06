@@ -1,6 +1,6 @@
-const HospitalContractAddress = "0x5549290cb973826ec7b0f30485d950a59cbb4cec"; 
+const HospitalContractAddress = "0xf64065e5167729dbcefd424fa50cd0558f5bbb25"; 
 
-const HospitalContractABI = [
+const HospitalContractABI =[
 	{
 		"constant": false,
 		"inputs": [

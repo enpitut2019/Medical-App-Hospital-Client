@@ -6,8 +6,8 @@
         <h2>患者情報</h2>
         <h3>以下の内容を確認した上でデプロイを行う</h3>
         <!--<h3><span class=".itemTitle7">項目1：</span></h3>-->                          
-        <ul id="patientItem"></ul>
-        <ons-input id="passportCountry" placeholder="パスポート発行国（3文字）" modifier="underbar" style="margin-bottom: 30px;"></ons-input><ons-input id="passportInfo" placeholder="パスポート番号" modifier="underbar" style="margin-bottom: 30px;"></ons-input>
+        <ul id="patientItem"></ul> 
+        <ons-input id="passportCountry" placeholder="パスポート発行国（3文字）" modifier="underbar" style="margin-bottom: 30px; margin-right:10px;"></ons-input><ons-input id="passportNo" placeholder="パスポート番号" modifier="underbar" style="margin-bottom: 30px;"></ons-input>
     </div>
 
     <ons-row>
@@ -21,6 +21,8 @@ let patientData;
 let patientSignature;
 let patientPassPhrase;
 
+let tabbar = document.querySelector("ons-tabbar"); 
+
 // イベントのキャッチ設定
 hospitalContractInstance.events.StartExamination({}, function(error, event){
     let contractAddress = event.returnValues.contractAddress;
@@ -30,7 +32,13 @@ hospitalContractInstance.events.StartExamination({}, function(error, event){
             examinationContractInstance.options.address = contractAddress;
             $("#patientItem").empty();
             hideModal();
-            pushPage1('./detail.html'); 
+            // 遷移の挙動管理のためビジーウェイト
+            let startMsec = new Date();
+            while (new Date() - startMsec < 500);
+            tabbar.setActiveTab(1);
+            startMsec = new Date();
+            while (new Date() - startMsec < 500);
+            pushPage2('./detail.html'); 
     }
 });
 
@@ -63,19 +71,20 @@ function readPatientDataFromQR() {
 async function deploy() {
     showModal("データを送信中"); 
     passportInfo = $("#passportCountry").val() + $("#passportNo").val();
+    console.log(passportInfo);
     // パスポート番号の暗号化（病院固有の鍵）
     let encryptedPassportInfo = CryptoJS.AES.encrypt(passportInfo, myPassPhrase).toString();
     let encryptedPatientPassPhrase = CryptoJS.AES.encrypt(patientPassPhrase, myPassPhrase).toString();
     // トランザクションのデータ部にくっつけるバイトコードを生成
     const encodedABI = hospitalContractInstance.methods.startExamination(encryptedPassportInfo, patientData, patientSignature, encryptedPatientPassPhrase).encodeABI();
     
-        // gasの使用量を計算
-        let gasAmount = await hospitalContractInstance.methods.startExamination(encryptedPassportInfo, patientData, patientSignature, encryptedPatientPassPhrase).estimateGas();
-        gasAmount = gasAmount + 500000;
-        // トランザクションにローカルの秘密鍵で署名
-        let signedtx = await web3.eth.accounts.signTransaction({to: HospitalContractAddress, data: encodedABI, gas: gasAmount}, myPrivateKey);
-        // 署名済みトランザクションを送信
-        let receipt = await web3.eth.sendSignedTransaction(signedtx.rawTransaction);
+    // gasの使用量を計算
+    let gasAmount = await hospitalContractInstance.methods.startExamination(encryptedPassportInfo, patientData, patientSignature, encryptedPatientPassPhrase).estimateGas();
+    gasAmount = gasAmount + 500000;
+    // トランザクションにローカルの秘密鍵で署名
+    let signedtx = await web3.eth.accounts.signTransaction({to: HospitalContractAddress, data: encodedABI, gas: gasAmount}, myPrivateKey);
+    // 署名済みトランザクションを送信
+    let receipt = await web3.eth.sendSignedTransaction(signedtx.rawTransaction);
 };
 </script>
 </ons-page>

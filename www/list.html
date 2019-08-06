@@ -3,7 +3,9 @@
         <div class="center">受付リスト</div>
         <div class="right"><ons-button modifier="quiet" onclick="getExaminationList()"><ons-icon icon="fa-refresh" size="25px"></ons-icon></ons-button></div>
     </ons-toolbar>
-    <ons-card><ons-search-input id="inputSearch" placeholder="パスポート番号で検索(未実装)"></ons-search-input></ons-card>
+    <div style="width:100%;text-align:center;">
+      <input type="search" id="inputSearch" value="" placeholder="" class="search-input" style="width:98%;margin-top:10px;height:35px;font-size:20px;">
+    </div>
     <div id="list">
             <!-- ここに入る -->
     </div>
@@ -44,6 +46,11 @@ function viewDetail(examinationContractAddress, decryptedPassportInfo){
 };
 
 let condition = function (value, index) {
+  var string  = 'isogram';
+  var pattern = 'is';
+  if(string.indexOf(pattern) === 0){
+    // 前方一致のときの処理
+  }
     // indexof(this) > 0で探す?
 	if( value[1] == this ) {
 		return true;
@@ -62,14 +69,14 @@ $('#inputSearch').keydown(function (e) {
 // keyupイベント
 $('#inputSearch').keyup(function (e) {
     if ( 13 == e.which && e.which == keyDownCode ) {
-            console.log("kensaku");
+            search();
     }
     return false;
 });
 
 function search(){
     console.log($("#inputSearch").val());
-    console.log(examinationList.findIndex(condition,$("#inputSearch").val()));
+    //console.log(examinationList.findIndex(condition,$("#inputSearch").val()));
 };
 </script>
 </ons-page>
