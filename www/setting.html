@@ -41,6 +41,7 @@
       }
       function setAccount(){
         myPrivateKey = $("#privateKeyForm").val();
+        if(myPrivateKey=="") return;
         myAddress = web3.eth.accounts.privateKeyToAccount(myPrivateKey).address;
         localStorage.setItem("privateKey", myPrivateKey); 
         localStorage.setItem("address", myAddress); 
@@ -50,7 +51,7 @@
       async function getTokenAmount(address){
           showModal("取得中")
           let amount = await erc20ContractInstance.methods.balanceOf(address).call({from: address});
-          $("#yourBalanceTUSD").text(amount/1000000000000000000 + " ETH");
+          $("#yourBalanceTUSD").text(amount/1000000000000000000 + " TUSD");
           hideModal();
       }
     </script>

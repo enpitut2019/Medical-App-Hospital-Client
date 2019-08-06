@@ -4,7 +4,7 @@
         <div class="right"><ons-button modifier="quiet" onclick="getExaminationList()"><ons-icon icon="fa-refresh" size="25px"></ons-icon></ons-button></div>
     </ons-toolbar>
     <div style="width:100%;text-align:center;">
-      <input type="search" id="inputSearch" value="" placeholder="" class="search-input" style="width:98%;margin-top:10px;height:35px;font-size:20px;">
+      <input type="search" id="inputSearch" value="" placeholder="検索 未実装" class="search-input" style="width:98%;margin-top:10px;height:35px;font-size:20px;">
     </div>
     <div id="list">
             <!-- ここに入る -->
@@ -15,29 +15,31 @@ ons.getScriptPage().onInit = function () {
     let flag = true;
     // onInitはアプリ起動時なのでmodalの表示がずれる
     this.onShow = function (){
-        if(flag){
-            getExaminationList();
-            flag = false;
-        }
+        if(flag){getExaminationList();flag=false;}
     }
 }
 
 let examinationList;
+let tmp;
 
 // コントラクトアドレス一覧を取得
 async function getExaminationList(){
     showModal("Fetch List...");
     $("#list").empty();
     examinationList = await hospitalContractInstance.methods.getExaminationList().call({from: myAddress});
-    examinationList.forEach(function(transaction) {
+    outputList(examinationList)
+    hideModal();
+};
+
+function outputList(list){
+    list.forEach(function(transaction) {
         let decryptedPassportInfo = CryptoJS.AES.decrypt(transaction[0], myPassPhrase).toString(CryptoJS.enc.Utf8);
         // timestampをミリ秒に変換
         let dt = new Date(transaction[2]*1000);
         let date = String(dt.getFullYear()) + "年" + String(dt.getMonth()+1) + "月" + String(dt.getDate()) + "日" + String(dt.getHours()) + "時" + String(dt.getMinutes()) + "分";
         $("#list").append("<ons-card onclick='viewDetail(\""+transaction[1]+"\",\""+decryptedPassportInfo+"\")' style='color: blue;'><h3>" + date + "　　" + decryptedPassportInfo    + "　　何らかの情報" + "</h3></ons-card>");
     });
-    hideModal();
-};
+}
 
 function viewDetail(examinationContractAddress, decryptedPassportInfo){ 
     examinationContractInstance.options.address = examinationContractAddress;
@@ -45,19 +47,18 @@ function viewDetail(examinationContractAddress, decryptedPassportInfo){
     pushPage2('./detail.html');
 };
 
-let condition = function (value, index) {
-  var string  = 'isogram';
-  var pattern = 'is';
-  if(string.indexOf(pattern) === 0){
-    // 前方一致のときの処理
-  }
-    // indexof(this) > 0で探す?
-	if( value[1] == this ) {
-		return true;
-	} else {
-		return false;
-	}
-};
+function check(array, value){
+    tmp = [[]];
+    for(i in array){
+      let a = array[i];
+      // 上で復号化しておく、とりあえずここで
+      let str = CryptoJS.AES.decrypt(a[0], myPassPhrase).toString(CryptoJS.enc.Utf8);
+      console.log(str);
+        if(str.indexOf(value) === 0){
+            tmp.push(a);
+        }
+    }
+}
 
 // keydown時のキーコードを保存する変数.
 var keyDownCode = 0
@@ -75,8 +76,9 @@ $('#inputSearch').keyup(function (e) {
 });
 
 function search(){
-    console.log($("#inputSearch").val());
-    //console.log(examinationList.findIndex(condition,$("#inputSearch").val()));
+    //console.log($("#inputSearch").val());
+    //check(examinationList, $("#inputSearch").val());
+    //outputList(tmp);
 };
 </script>
 </ons-page>

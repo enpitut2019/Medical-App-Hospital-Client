@@ -9,7 +9,44 @@
         <ul id="patientItem"></ul> 
         <ons-input id="passportCountry" placeholder="パスポート発行国（3文字）" modifier="underbar" style="margin-bottom: 30px; margin-right:10px;"></ons-input><ons-input id="passportNo" placeholder="パスポート番号" modifier="underbar" style="margin-bottom: 30px;"></ons-input>
     </div>
+    <ons-list>
+      <ons-list-header>名前（アルファベット表記）</ons-list-header>
+      <ons-list-item id="_name" style="margin:1%; height:1em"></ons-list-item>
 
+      <ons-list-header>国籍</ons-list-header>
+      <ons-list-item id="_country" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>宗教上の要望</ons-list-header>
+      <ons-list-item id="_religious_requests" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>母語および母語以外に対応可能な言語</ons-list-header>
+      <ons-list-item id="_language" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>日本での住所と連絡先（在留外国人患者）／滞在先（訪日外国人旅行者患者）</ons-list-header>
+      <ons-list-item id="_destination" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>勤務先</ons-list-header>
+      <ons-list-item id="_work_place" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>日本での滞在期間（訪日外国人旅行者の場合）</ons-list-header>
+      <ons-list-item id="_length_of_stay" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>医療保険加入の有無（公的および民間）</ons-list-header>
+      <ons-list-item id="_medical_insurance" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>支払い方法</ons-list-header>
+      <ons-list-item id="_method_of_payment" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>緊急連絡先</ons-list-header>
+      <ons-list-item id="_emergency_contact" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>宿泊事業者や知人等、付添者の連絡先（訪日外国人旅行者患者の場合）</ons-list-header>
+      <ons-list-item id="_acquaintance" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>その他備考</ons-list-header>
+      <ons-list-item id="_others" style="margin:1%; height:1em"></ons-list-item>        
+
+    </ons-list>
     <ons-row>
         <ons-col width="50%" style="text-align: center;"><ons-button id="readQRCodeButton" modifier="outline" onclick="readPatientDataFromQR()" style="width:95%;"><ons-icon icon="fa-qrcode"></ons-icon> 患者情報の読み込み</ons-button></ons-col>
         <ons-col width="50%" style="text-align: center;"><ons-button id="deployButton" modifier="outline" onclick="deploy()" disabled="true" style="width:95%;"><ons-icon icon="fa-cloud-upload-alt"></ons-icon> スマートコントラクトのデプロイ</ons-button></ons-col>
@@ -23,6 +60,10 @@ let patientPassPhrase;
 
 let tabbar = document.querySelector("ons-tabbar"); 
 
+function sleep (msec) {
+  return new Promise(resolve => setTimeout(resolve, msec))
+}
+
 // イベントのキャッチ設定
 hospitalContractInstance.events.StartExamination({}, function(error, event){
     let contractAddress = event.returnValues.contractAddress;
@@ -32,12 +73,16 @@ hospitalContractInstance.events.StartExamination({}, function(error, event){
             examinationContractInstance.options.address = contractAddress;
             $("#patientItem").empty();
             hideModal();
-            // 遷移の挙動管理のためビジーウェイト
-            let startMsec = new Date();
-            while (new Date() - startMsec < 1000);
-            pushPage2('./detail.html'); 
+            popPage2();
+            (async function(){
+                await sleep(1000);
+                tabbar.setActiveTab(1);
+                await sleep(1000); 
+                pushPage2('./detail.html'); 
+            }());
     }
 });
+
 
 // QRコード読み込んで患者データを表示
 function readPatientDataFromQR() {
@@ -52,10 +97,19 @@ function readPatientDataFromQR() {
         const decrypted = CryptoJS.AES.decrypt(crypto, key);
         const decryptedStrings = decrypted.toString(CryptoJS.enc.Utf8);
         const patientDataJson = JSON.parse(decryptedStrings);
-        $("#patientItem").empty(); 
-        for(let key in patientDataJson) {
-            $("#patientItem").append("<li>" + key + "：" + patientDataJson[key] + "</li>");
-        }
+        $('#_name').text(patientDataJson.name);
+        $('#_country').text(patientDataJson.country);
+        $('#_religious_requests').text(patientDataJson.religious_requests);
+        $('#_language').text(patientDataJson.language);
+        $('#_destination').text(patientDataJson.destination);
+        $('#_work_place').text(patientDataJson.work_place);
+        $('#_length_of_stay').text(patientDataJson.length_of_stay);
+        $('#_medical_insurance').text(patientDataJson.medical_insurance);
+        $('#_method_of_payment').text(patientDataJson.method_of_payment);
+        $('#_emergency_contact').text(patientDataJson.emergency_contact);
+        $('#_acquaintance').text(patientDataJson.acquaintance);
+        $('#_others').text(patientDataJson.others);
+
         patientData = crypto;
         patientPassPhrase = key;
         patientSignature = sign;
@@ -67,21 +121,21 @@ function readPatientDataFromQR() {
 // 患者ごとに専用のスマートコントラクトをデプロイ
 async function deploy() {
     showModal("データを送信中"); 
-    // タブ遷移
-    tabbar.setActiveTab(1);
-    passportInfo = $("#passportCountry").val() + $("#passportNo").val();
+    passportInfo = $("#passportCountry").val() + " " + $("#passportNo").val() + " " + $('#_name').text();
     console.log(passportInfo);
+
     // パスポート番号の暗号化（病院固有の鍵）
     let encryptedPassportInfo = CryptoJS.AES.encrypt(passportInfo, myPassPhrase).toString();
     let encryptedPatientPassPhrase = CryptoJS.AES.encrypt(patientPassPhrase, myPassPhrase).toString();
     // トランザクションのデータ部にくっつけるバイトコードを生成
     const encodedABI = hospitalContractInstance.methods.startExamination(encryptedPassportInfo, patientData, patientSignature, encryptedPatientPassPhrase).encodeABI();
-    
+
     // gasの使用量を計算
     let gasAmount = await hospitalContractInstance.methods.startExamination(encryptedPassportInfo, patientData, patientSignature, encryptedPatientPassPhrase).estimateGas();
     gasAmount = gasAmount + 500000;
     // トランザクションにローカルの秘密鍵で署名
     let signedtx = await web3.eth.accounts.signTransaction({to: HospitalContractAddress, data: encodedABI, gas: gasAmount}, myPrivateKey);
+    
     // 署名済みトランザクションを送信
     let receipt = await web3.eth.sendSignedTransaction(signedtx.rawTransaction);
 

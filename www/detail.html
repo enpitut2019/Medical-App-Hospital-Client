@@ -5,19 +5,57 @@
         <div class="right"><ons-button modifier="quiet" onclick="getContractData()"><ons-icon icon="fa-refresh" size="25px"></ons-icon></ons-button></div>
     </ons-toolbar>
     <ons-card>
-        <h2>ステータス</h2>
+        <h2>ステータス <ons-icon id="statusIcon" icon="fa-check" style="display:none;color:green;"></ons-icon></h2>
         <h3 id="depositItem"><span class="itemTitle7">デポジット金額</span><span id="depositValue"></span></h3>
         <h3><span class="itemTitle7">請求金額</span><span id="outputMedicalCost"></span></h3>
-        <h3 id="unpaidCost" style="display:none;"><span class="itemTitle7">未収金金額</span><span id="outputUnpaidCost"></span></h3>
+        <h3 id="unpaidCostItem" style="display:none;"><span class="itemTitle7">未収金金額</span><span id="outputUnpaidCost"></span></h3>
         <h3><span class="itemTitle7">発生した手数料</span><span id="usedETH"></span></h3>
         <ons-row>
-            <ons-col width="50%" style="text-align: center;"><ons-button id="inputMedicalCostButton" modifier="outline" onclick="inputMedicalCost()" style="width:95%;"><ons-icon icon="fa-coins"></ons-icon> 請求（医療費の登録）</ons-button></ons-col>
-            <ons-col width="50%" style="text-align: center;"><ons-button id="signButton" modifier="outline" onclick="getPatientSignatureFromQR()" style="width:95%;"><ons-icon icon="fa-qrcode"></ons-icon> 決済（署名の読み込み）</ons-button></ons-col>
+            <ons-col width="33%" style="text-align: center;"><ons-button id="inputMedicalCostButton" modifier="outline" onclick="inputMedicalCost()" style="width:95%;"><ons-icon icon="fa-coins"></ons-icon> 請求金額の入力</ons-button></ons-col>
+            <ons-col width="33%" style="text-align: center;"><ons-button id="signButton" modifier="outline" onclick="getPatientSignatureFromQR()" style="width:95%;"><ons-icon icon="fa-qrcode"></ons-icon> 請求金額の確定</ons-button></ons-col>
+            <ons-col width="33%" style="text-align: center;"><ons-button id="depositButton" modifier="outline" onclick="withDraw()" style="width:95%;"><ons-icon icon="fa-wallet"></ons-icon> 決済（デポジット出金）</ons-button></ons-col>
         </ons-row>
     </ons-card>
     <ons-card>
-        <h2>患者特記事項</h2>
-        <ul id="patientItem2"></ul>
+        <h2>患者の情報</h2>
+    <ons-list>
+      <ons-list-header>名前（アルファベット表記）</ons-list-header>
+      <ons-list-item id="_name2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>国籍</ons-list-header>
+      <ons-list-item id="_country2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>宗教上の要望</ons-list-header>
+      <ons-list-item id="_religious_requests2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>母語および母語以外に対応可能な言語</ons-list-header>
+      <ons-list-item id="_language2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>日本での住所と連絡先（在留外国人患者）／滞在先（訪日外国人旅行者患者）</ons-list-header>
+      <ons-list-item id="_destination2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>勤務先</ons-list-header>
+      <ons-list-item id="_work_place2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>日本での滞在期間（訪日外国人旅行者の場合）</ons-list-header>
+      <ons-list-item id="_length_of_stay2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>医療保険加入の有無（公的および民間）</ons-list-header>
+      <ons-list-item id="_medical_insurance2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>支払い方法</ons-list-header>
+      <ons-list-item id="_method_of_payment2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>緊急連絡先</ons-list-header>
+      <ons-list-item id="_emergency_contact2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>宿泊事業者や知人等、付添者の連絡先（訪日外国人旅行者患者の場合）</ons-list-header>
+      <ons-list-item id="_acquaintance2" style="margin:1%; height:1em"></ons-list-item>
+
+      <ons-list-header>その他備考</ons-list-header>
+      <ons-list-item id="_others2" style="margin:1%; height:1em"></ons-list-item>        
+
+    </ons-list>
     </ons-card>
     <ons-card>
         <h2>情報</h2>
@@ -26,20 +64,30 @@
     </ons-card>
 
 <script>
+
 // onInit -> detai.html読み込み時に呼ばれる
 // onShow -> 画面に表示される度に呼ばれる
 ons.getScriptPage().onInit = function () {
     let examinationContractAddress;
-    let tokenData;
     let ethPrice;
     let patientSign;
+    let contractData;
+    let patientAddress;
+    let decryptedPatientPassPhrase;
+    let decryptedPatientData;
+    let depositValue;
+    let medicalCost;
+    let unpaidCost;
     let signCompleted;
+    let usedETH;
+    let tokenData;
+    
+    // イベント設定（アドレス関係ない？）
+    setEventCatch();
+
     this.onShow = function () {
-        // 違うコントラクトの情報を見る時
-        if(examinationContractAddress != examinationContractInstance.options.address){
-            getContractAddress();
-            getEthPrice();
-        }
+        getEthPrice();
+        getContractData();
     }
 }
 
@@ -55,97 +103,138 @@ function getEthPrice(){
     request.send();
 }
 
-// detail.html読み込み時にeventのキャッチ設定をする
-function getContractAddress(){
+function sleep (msec) {
+  return new Promise(resolve => setTimeout(resolve, msec))
+}
+
+function setEventCatch(){
+    // コントラクトアドレス宛のERC20の送金をキャッチする
+    // 複数回呼び出されるのでここにwithdrawとか書くと死ぬ
+    erc20ContractInstance.events.Transfer({}, function(error, event){
+        console.log(event);
+        let toAddress = event.returnValues.to;
+        // 最後に開いたページのイベントしか取らない
+        if(toAddress == examinationContractAddress){
+            console.log("Event:Deposit");
+            (async function(){
+                await sleep(500);
+                getContractData();
+            }());
+        }
+    });
+
+    // 全てのイベントをキャッチする
+    examinationContractInstance.events.allEvents({}, function(error, event){
+      // 勝手にウラで更新されても後でどうせ更新されるのでとりあえず放置する
+      // console.log(event);
+
+      // 医療費の登録完了通知
+      if(event.event === "SetMedicalCost"){
+        console.log("Event:SetMedicalCost");
+          medicalCost = event.returnValues.medicalCost;
+          $("#outputMedicalCost").text((parseFloat(medicalCost)/10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
+          $("#outputUnpaidCost").text((parseFloat(medicalCost)/10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
+      }
+      // 署名の登録完了通知
+      if(event.event === "SignMedicalCost"){
+        console.log("Event:SignMedicalCost");
+          $("#inputMedicalCostButton").prop("disabled", true);
+          $("#signButton").prop("disabled", true);
+          $("#outputUnpaidCost").text($("#outputMedicalCost").text());
+          $("#unpaidCostItem").show();
+          $("#depositButton").prop("disabled", false);
+          if(depositValue <= 0) $("#depositButton").prop("disabled", true);
+          signCompleted = true;
+      }
+      // 支払い通知
+      // TODO:paymentもしくはrefundから出るerc20のtransferに反応してしまう
+      if(event.event === "Payment"){
+          console.log("Event:Payment");
+          unpaidCost = event.returnValues.unpaidCost;
+          $("#outputUnpaidCost").text((parseFloat(unpaidCost)/10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
+      }
+      if(event.event === "Refund"){
+          console.log("Event:Refund");
+          getContractData();
+      }
+      hideModal();
+    });
+}
+// コントラクトの情報を取得
+// 返り値等はSolidityを確認して
+async function getContractData(){
+    showModal("データ取得中")
     examinationContractAddress = examinationContractInstance.options.address;
     localStorage.setItem("aaaa",examinationContractAddress);
     $("#patientItem1").text(passportInfo);
     $("#contractAddress").text(examinationContractAddress);
 
-    // 全てのイベントをキャッチする
-    examinationContractInstance.events.allEvents({}, function(error, event){
-      //console.log(event);
-      if(event.event === "Deposit"){
-        let deposit = event.returnValues.amountOf;
-        $("#depositValue").text(deposit/(10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
-      }
-      if(event.event === "SetMedicalCost"){
-          let medicalCost = event.returnValues.medicalCost;
-          $("#outputMedicalCost").text((parseFloat(medicalCost)/10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
-      }
-      if(event.event === "SignMedicalCost"){
-          $("#inputMedicalCostButton").prop("disabled", true);
-          $("#signButton").prop("disabled", true);
-          $("#withDrawButton").prop("disabled", false);
-          $("#outputUnpaidCost").text($("#outputMedicalCost").text());
-          $("#unpaidCost").show();
-          $("depositValue").hide();
-      }
-      if(event.event === "CallWithDraw"){
-
-      }
-      if(event.event === "Payment"){
-          let isCompleted = event.returnValues.isCompleted;
-          let unpaidCost = event.returnValues.unpaidCost;
-          $("#outputUnpaidCost").text((parseFloat(unpaidCost)/10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
-          $("#depositValue").text("0.00" + tokenData[1] + " (" + tokenData[0] + ")");
-      }
-      hideModal();
-    });
-    // ERC20の送金をキャッチする
-    erc20ContractInstance.events.Transfer({_to: examinationContractAddress}, function(error, event){
-        if(signCompleted){
-          withDraw();
-        }else{
-          // 書き込みの反映を待つためにビジーウェイト
-          let startMsec = new Date();
-          while (new Date() - startMsec < 1000);
-          getContractData();
-        }
-    });
-    getContractData();
-}
-
-// コントラクトの情報を取得
-// 返り値等はSolidityを確認して
-async function getContractData(){
-    showModal("データ取得中")
-    let contractData = await examinationContractInstance.methods.getContractData().call({from: myAddress});
-    let patientAddress = contractData[0];
-    let decryptedPatientPassPhrase = CryptoJS.AES.decrypt(contractData[2], myPassPhrase).toString(CryptoJS.enc.Utf8);
-    let decryptedPatientData = CryptoJS.AES.decrypt(contractData[1], decryptedPatientPassPhrase).toString(CryptoJS.enc.Utf8);
-    let depositValue = contractData[3];
-    let medicalCost = contractData[4];
-    let unpaidCost = contractData[5];
+    contractData = await examinationContractInstance.methods.getContractData().call({from: myAddress});
+    console.log(contractData);
+    patientAddress = contractData[0];
+    decryptedPatientPassPhrase = CryptoJS.AES.decrypt(contractData[2], myPassPhrase).toString(CryptoJS.enc.Utf8);
+    decryptedPatientData = CryptoJS.AES.decrypt(contractData[1], decryptedPatientPassPhrase).toString(CryptoJS.enc.Utf8);
+    depositValue = contractData[3];
+    medicalCost = contractData[4];
+    unpaidCost = contractData[5];
     signCompleted = contractData[6];
     let usedETH = web3.utils.fromWei(contractData[7], 'ether');
     tokenData = contractData[8];
+
+    // 患者アドレスを登録
     $("#patientAddress").text(patientAddress);
+
+    // デポジット　・　医療費　・　未収金金額　・　手数料
     $("#depositValue").text((parseFloat(depositValue)/10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
     $("#outputMedicalCost").text((parseFloat(medicalCost)/10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
-    $("#usedETH").text(usedETH + " ETH / " + (parseFloat(usedETH)*Number(ethPrice)).toFixed(2) +" JPY"); 
     $("#outputUnpaidCost").text((parseFloat(unpaidCost)/10**tokenData[2]).toFixed(2) + " " + tokenData[1] + " (" + tokenData[0] + ")");
+    $("#usedETH").text(usedETH + " ETH / " + (parseFloat(usedETH)*Number(ethPrice)).toFixed(2) +" JPY"); 
+    
+    // 患者情報の表示
     let decryptedPatientDataJson = JSON.parse(decryptedPatientData);
-    $("#patientItem2").empty();
-    for(let key in decryptedPatientDataJson) {
-        $("#patientItem2").append("<li>" + key + "：" + decryptedPatientDataJson[key] + "</li>"); 
-    }
-    if(unpaidCost == 0){
-        $("#withDrawButton").prop("disabled", true);
-    }
+    console.log(decryptedPatientDataJson);
+    console.log(decryptedPatientDataJson.name);
+    $('#_name2').text(decryptedPatientDataJson.name);
+    $('#_country2').text(decryptedPatientDataJson.country);
+    $('#_religious_requests2').text(decryptedPatientDataJson.religious_requests);
+    $('#_language2').text(decryptedPatientDataJson.language);
+    $('#_destination2').text(decryptedPatientDataJson.destination);
+    $('#_work_place2').text(decryptedPatientDataJson.work_place);
+    $('#_length_of_stay2').text(decryptedPatientDataJson.length_of_stay);
+    $('#_medical_insurance2').text(decryptedPatientDataJson.medical_insurance);
+    $('#_method_of_payment2').text(decryptedPatientDataJson.method_of_payment);
+    $('#_emergency_contact2').text(decryptedPatientDataJson.emergency_contact);
+    $('#_acquaintance2').text(decryptedPatientDataJson.acquaintance);
+    $('#_others2').text(decryptedPatientDataJson.others);
+
+    // 請求確定の時
     if(signCompleted){
-        $("#depositItem").hide();
+        // 医療費・請求ボタンdisabled
         $("#inputMedicalCostButton").prop("disabled", true);
         $("#signButton").prop("disabled", true);
-        $("#unpaidCost").show();
+        // 未収金金額の表示
+        $("#unpaidCostItem").show();
+        // デポジット金額がない時 - 決済ボタンdisabled
+        if(depositValue <= 0) $("#depositButton").prop("disabled", true);
+        // 支払い完了の時
+        if(unpaidCost == 0){
+          $("#statusIcon").show();
+          // 決済ボタンdisabled
+          $("#withDrawButton").prop("disabled", true);
+        }
+    }else{
+        // 請求確定していない時、決済ボタンdisabled
+        $("#depositButton").prop("disabled", true);
     }
     hideModal();
 }
 
 // 医療費の登録プロンプトを呼び出し
 function inputMedicalCost(){
-    ons.notification.prompt({title: '医療費の登録', message: '1Token ≒ 1USD', cancelable: true}).then(function(medicalCost) {
-        setMedicalCost(medicalCost);
+    ons.notification.prompt({title: '医療費の登録', message: '1Token ≒ 1USD'}).then(function(medicalCost){
+        if(medicalCost !== ""){
+            setMedicalCost(medicalCost);
+        }
     });
 }
 
@@ -153,30 +242,25 @@ function inputMedicalCost(){
 // 引数その他はSolidityを確認して
 async function setMedicalCost(medicalCost){
     showModal("請求金額を登録中です");
+    console.log("請求金額を登録中です");
     // TODO medicalCostの入力値チェック
     // 小数点なしの入力が来た場合のために".00"をつける
     // 小数点ありの場合はnum[2]になるので影響なし
-    console.log(medicalCost);
-    medicalCost = String(medicalCost) + ".00";
-    console.log(medicalCost);
+    let medicalCost2 = String(medicalCost) + ".00";
     // 整数部と小数部に分割して合体
-    let num = String(medicalCost).split('.')
+    let num = String(medicalCost2).split('.')
     let medicalCostStr = String(num[0]) + String(num[1]);
     let tokenAmount = web3.utils.toBN(medicalCostStr);
     // 小数点以下の桁数
     let decimalLen = num[1].length;
     let decimals = web3.utils.toBN(tokenData[2]-decimalLen);
-    console.log(tokenAmount.mul(web3.utils.toBN(10).pow(decimals)).toString());
     // ether -> wei 的な感じで変換
     let tokenAmountHex = "0x" + tokenAmount.mul(web3.utils.toBN(10).pow(decimals)).toString('hex');
-    // トランザクションのデータ部にくっつけるバイトコードを生成
     const encodedABI = examinationContractInstance.methods.setMedicalCost(tokenAmountHex).encodeABI();
     // gasの使用量を計算
     //let gasAmount = await examinationContractInstance.methods.setMedicalCost(tokenAmountHex).estimateGas() + 10000;
     let gasAmount = 1000000;
-    // トランザクションにローカルの秘密鍵で署名
     let signedtx = await web3.eth.accounts.signTransaction({to: examinationContractAddress, data: encodedABI, gas: gasAmount}, myPrivateKey);
-    // 署名済みトランザクションを送信
     let receipt = await web3.eth.sendSignedTransaction(signedtx.rawTransaction);
     console.log(receipt);
 }
@@ -187,37 +271,49 @@ function getPatientSignatureFromQR() {
         // キャンセルボタンを押したときの挙動は正常なのでここが呼ばれる→if文で返す
         if(result.text == "") return;
         patientSignature = result.text;
-        console.log(patientSignature);
         signMedicalCost(patientSignature);
     },function (error) {console.log(error);}); 
 }
 
 // 読み込んだ患者のサインを送信
 async function signMedicalCost(signature){
-    showModal("署名を送信中");
-    // トランザクションのデータ部にくっつけるバイトコードを生成
+  console.log(medicalCost);
+    let sigAddress = await web3.eth.accounts.recover(String(medicalCost), signature);
+    if(sigAddress != patientAddress){
+      console.log(sigAddress);
+        ons.notification.alert({title: '入力エラー', message: '請求金額もしくは秘密鍵が異なります'});
+        return;
+    }
+    showModal("請求金額を確定中");
+    console.log("請求金額を確定中");
     const encodedABI = examinationContractInstance.methods.signMedicalCost(signature).encodeABI();
-    // gasの使用量を計算
     //let gasAmount = await examinationContractInstance.methods.setMedicalCost(tokenAmountHex).estimateGas() + 10000;
     let gasAmount = 1000000;
-    // トランザクションにローカルの秘密鍵で署名
     let signedtx = await web3.eth.accounts.signTransaction({to: examinationContractAddress, data: encodedABI, gas: gasAmount}, myPrivateKey);
-    // 署名済みトランザクションを送信
     let receipt = await web3.eth.sendSignedTransaction(signedtx.rawTransaction);
     console.log(receipt);
 }
 
 // 引き出し
 async function withDraw(){
+    console.log("決済中");
     showModal("決済中");
-    // トランザクションのデータ部にくっつけるバイトコードを生成
     const encodedABI = examinationContractInstance.methods.withDraw().encodeABI();
-    // gasの使用量を計算
     //let gasAmount = await examinationContractInstance.methods.setMedicalCost(tokenAmountHex).estimateGas() + 10000;
     let gasAmount = 1000000;
-    // トランザクションにローカルの秘密鍵で署名
     let signedtx = await web3.eth.accounts.signTransaction({to: examinationContractAddress, data: encodedABI, gas: gasAmount}, myPrivateKey);
-    // 署名済みトランザクションを送信
+    let receipt = await web3.eth.sendSignedTransaction(signedtx.rawTransaction);
+    console.log(receipt);
+}
+
+// 返金
+async function refund(){
+    console.log("返金中");
+    showModal("返金中");
+    const encodedABI = examinationContractInstance.methods.refund().encodeABI();
+    //let gasAmount = await examinationContractInstance.methods.setMedicalCost(tokenAmountHex).estimateGas() + 10000;
+    let gasAmount = 1000000;
+    let signedtx = await web3.eth.accounts.signTransaction({to: examinationContractAddress, data: encodedABI, gas: gasAmount}, myPrivateKey);
     let receipt = await web3.eth.sendSignedTransaction(signedtx.rawTransaction);
     console.log(receipt);
 }

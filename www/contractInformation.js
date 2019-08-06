@@ -1,6 +1,34 @@
-const HospitalContractAddress = "0x7f27953e637fd70decbeb39e37d18b42afe31c7a"; 
+const HospitalContractAddress = "0xbab8eaf53250dcc0ac657a74b2cd6c24e4c0e3db"; 
 
 const HospitalContractABI = [
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getExaminationList",
+		"outputs": [
+			{
+				"components": [
+					{
+						"name": "passportNo",
+						"type": "string"
+					},
+					{
+						"name": "examinationContract",
+						"type": "address"
+					},
+					{
+						"name": "start",
+						"type": "uint256"
+					}
+				],
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
 	{
 		"constant": false,
 		"inputs": [
@@ -48,34 +76,6 @@ const HospitalContractABI = [
 		],
 		"name": "StartExamination",
 		"type": "event"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "getExaminationList",
-		"outputs": [
-			{
-				"components": [
-					{
-						"name": "passportNo",
-						"type": "string"
-					},
-					{
-						"name": "examinationContract",
-						"type": "address"
-					},
-					{
-						"name": "start",
-						"type": "uint256"
-					}
-				],
-				"name": "",
-				"type": "tuple[]"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
 	}
 ];
 
@@ -294,16 +294,23 @@ const ExaminationContractABI = [
 		"inputs": [
 			{
 				"indexed": false,
-				"name": "isCompleted",
-				"type": "bool"
-			},
-			{
-				"indexed": false,
 				"name": "unpaidCost",
 				"type": "uint256"
 			}
 		],
-		"name": "Payment",
+		"name": "WithDraw",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "Refund",
 		"type": "event"
 	}
 ];

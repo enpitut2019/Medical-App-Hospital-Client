@@ -3,7 +3,7 @@ const web3 = new Web3('wss://rinkeby.infura.io/ws/v3/cf93a80dccb7456d806de406950
 
 // SmartContractを読み込み
 const hospitalContractInstance  = new web3.eth.Contract(HospitalContractABI, HospitalContractAddress);
-const examinationContractInstance = new web3.eth.Contract(ExaminationContractABI);
+let examinationContractInstance = new web3.eth.Contract(ExaminationContractABI);
 
 // テスト用に秘密鍵とアドレス,パスフレーズはセットしておく
 localStorage.setItem('privateKey', "0x0D274BD5D6DC605137D958AC2DB9C9BD189FF86338150A04C7DB4B3E942FAC0C");
@@ -29,3 +29,5 @@ if(myPrivateKey == null){
     localStorage.setItem('address', myAddress);
     localStorage.setItem('passPhrase', myPassPhrase);
 }
+
+let depositBlockHash = "";
